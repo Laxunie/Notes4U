@@ -1,46 +1,64 @@
 import {
-  createUserWithEmailAndPassword,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
+  signInWithEmailLink,
   sendSignInLinkToEmail,
-  signOut,
-  updateProfile,
+  isSignInWithEmailLink,
+  signOut
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { auth } from "../firebase";
 
 const UserContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = useState({})
+
+  const [user, setUser] = useState({});
 
   const actionCodeSettings = {
     // URL you want to redirect back to. The domain (www.example.com) for this
     // URL must be in the authorized domains list in the Firebase Console.
-    url: 'http://localhost:3000',
+    url: 'http://localhost:3000/login',
     // This must be true.
     handleCodeInApp: true,
-    iOS: {
-      bundleId: 'com.example.ios'
-    },
-    android: {
-      packageName: 'com.example.android',
-      installApp: true,
-      minimumVersion: '12'
-    },
-    dynamicLinkDomain: 'example.page.link'
   };
 
-  const SignInEmail = async (email) => {
+  const SendEmail = async (email) => {
     try{
-      sendSignInLinkToEmail(auth, email, actionCodeSettings).then(() => {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings).then(() => {
         window.localStorage.setItem('emailForSignIn', email);
-        console.log(user)
       })
     }
     catch{
 
     }
+  }
+
+  const SignIn = async () => {
+    try{
+      if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        console.log(email)
+        if (!email) {
+            email = window.prompt('Please provide your email for confirmation');
+        }
+        signInWithEmailLink(auth, email, window.location.href)
+          .then((result) => {
+            window.localStorage.removeItem('emailForSignIn');
+            <Navigate to="/notes"/>
+          })
+          .catch((error) => {
+            console.log(error)
+          });
+      }
+    }
+    catch(error){
+      console.log(error)
+    }
+  }
+
+  const SignOut = async () => {
+    signOut(auth)
   }
 
   useEffect(() => {
@@ -55,7 +73,10 @@ export const AuthContextProvider = ({ children }) => {
   return (
     <UserContext.Provider
       value={{
-        SignInEmail
+        SendEmail,
+        SignIn,
+        SignOut,
+        user
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { addDoc, getDocs, getFirestore, collection, updateDoc, doc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_APIKEY,
@@ -14,16 +14,40 @@ const firebaseConfig = {
 
 initializeApp(firebaseConfig);
 
-// const addProcessor = async (name, brand, cores, threads) => {
-//   const docRef = await addDoc(collection(db, "processors"), {
-//     name: name.toString(),
-//     brand: brand.toString(),
-//     cores: cores.toString(),
-//     threads: threads.toString(),
-//   });
-//   console.log("Document written with ID: ", docRef.id);
-// };
+const addNote = async (title, note, uid) => {
+  const querySnapshot = await getDocs(collection(db, "notes/" + uid + "/note"));
+  var setId = querySnapshot.size + 1;
+
+  const addRef = await addDoc(collection(db, "notes/" + uid + "/note"), {
+    
+  });
+
+  //Inorder to update my documents easily, I created a reference then 'updated' the reference so I can add a key/value pair of the documents reference id
+  //for me to grab in the future and update/delete the specified document
+  await setDoc(doc(db, "notes/" + uid + "/note/", addRef.id),{
+    title: title,
+    note: note,
+    id: setId,
+    ref: addRef.id
+  })
+};
+
+const getNotes = async (uid) => {
+  const data = [];
+  const querySnapshot = await getDocs(collection(db, "notes/" + uid + "/note"));
+  querySnapshot.forEach((doc) => {
+    data.push(doc.data())
+  });
+  return data
+}
+
+const updateNotes = async (uid, refId, title, note, id) => {
+  await updateDoc(doc(db, "notes/" + uid + "/note", refId), {
+    title: title,
+    note: note,
+  });
+}
 
 export const auth = getAuth();
 export const db = getFirestore();
-// export { addProcessor };
+export { addNote, getNotes, updateNotes };
