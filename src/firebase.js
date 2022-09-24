@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { addDoc, getDocs, getFirestore, collection, updateDoc, doc, setDoc } from "firebase/firestore";
+import { addDoc, getDocs, getFirestore, collection, updateDoc, doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_APIKEY,
@@ -13,9 +13,9 @@ const firebaseConfig = {
 };
 
 initializeApp(firebaseConfig);
-
+console.log(process.env.REACT_APP_FIREBASE_MEASUREMENTID)
 const addNote = async (title, note, uid) => {
-  const querySnapshot = await getDocs(collection(db, "notes/" + uid + "/note"));
+  const querySnapshot = await getDocs(collection(db,  "notes/" + uid + "/note"));
   var setId = querySnapshot.size + 1;
 
   const addRef = await addDoc(collection(db, "notes/" + uid + "/note"), {
@@ -28,7 +28,9 @@ const addNote = async (title, note, uid) => {
     title: title,
     note: note,
     id: setId,
-    ref: addRef.id
+    ref: addRef.id,
+    timeStamp: serverTimestamp(),
+    updatedTimeStamp: serverTimestamp()
   })
 };
 
@@ -41,13 +43,18 @@ const getNotes = async (uid) => {
   return data
 }
 
-const updateNotes = async (uid, refId, title, note, id) => {
+const updateNotes = async (uid, refId, title, note) => {
   await updateDoc(doc(db, "notes/" + uid + "/note", refId), {
     title: title,
     note: note,
+    updatedTimeStamp: serverTimestamp()
   });
+}
+
+const deleteNotes = async (uid, refId) => {
+  await deleteDoc(doc(db, "notes/" + uid + "/note", refId))
 }
 
 export const auth = getAuth();
 export const db = getFirestore();
-export { addNote, getNotes, updateNotes };
+export { addNote, getNotes, updateNotes, deleteNotes };
