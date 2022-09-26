@@ -73,7 +73,7 @@ const Notes = () => {
   const handleUpdate = (e) => {
     e.preventDefault()
     setRefreshing(true)
-    updateNotes(user.uid, currentNote.ref, title, note, currentNote.id).then(() => {navigate(0)})i
+    updateNotes(user.uid, currentNote.ref, title, note, currentNote.id).then(() => {navigate(0)})
   }
 
   useEffect(() => {
