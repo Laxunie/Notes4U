@@ -6,10 +6,11 @@ import AddIcon from '@mui/icons-material/Add';
 import {FaSignOutAlt, FaTrash} from 'react-icons/fa'
 import Modal from '@mui/material/Modal';
 import {BiEdit} from 'react-icons/bi'
-import { addNote, getNotes, updateNotes } from '../firebase';
+import { addNote, getNotes, updateNotes, deleteNotes } from '../firebase';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import {BsPencilSquare} from 'react-icons/bs'
+import LoadingSpin from "react-loading-spin";
 
 const Notes = () => {
   
@@ -76,13 +77,18 @@ const Notes = () => {
     updateNotes(user.uid, currentNote.ref, title, note, currentNote.id).then(() => {navigate(0)})
   }
 
+  const handleDelete = (e, note) => {
+    e.preventDefault()
+    setRefreshing(true)
+    deleteNotes(user.uid, note.ref).then(() => {navigate(0)})
+  }
+
   useEffect(() => {
     getNotes(user.uid).then((results) => {
       setDBNotes(results);
       setLoading(false)
     }).catch(() => {return})
   },[user])
-
   return (
     <div className=''>
       <div className='flex justify-between items-center py-5 px-10'>
@@ -96,26 +102,37 @@ const Notes = () => {
           ><FaSignOutAlt size={20}/>
         </button>
       </div>
-      <div className='inline-grid grid-cols-4 w-full gap-[40px] p-6'>
-        {loading ? <h1>Loading</h1> : dbNotes.map(note =>
-          <section key={note.id} className='delete flex flex-wrap justify-center '>
-            <Card style={{position:"relative",backgroundColor: "#fcfcfc"}} sx={{ width: 300, height:250 }}>
-              <CardContent style={{minHeight:"100px"}}>
-                <h1 className='font-bold text-2xl border-2 border-x-0 border-t-0 border-black'>{note.title}</h1>
-                <p className='mt-3 max-h-[180px] whitespace-pre-line break-words overflow-y-auto'>{note.note}</p>
-                <div className='absolute bottom-4 right-4 flex gap-3'>
-                  <BsPencilSquare 
-                    className='cursor-pointer' 
-                    onClick={(e) => {
-                      handleEdit(e, note);
-                    }}/>
-                  <FaTrash className='cursor-pointer'/>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-        )}
-      </div>
+      
+        {loading ? <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'><LoadingSpin primaryColor="blue"/></div> : 
+          <div className='inline-grid grid-cols-4 w-full gap-[40px] p-6'>
+            {dbNotes.map(note =>
+              <section key={note.id} className='delete flex flex-wrap justify-center '>
+                <Card style={{position:"relative",backgroundColor: "#fcfcfc"}} sx={{ width: 300, height:250 }}>
+                  <CardContent style={{minHeight:"100px"}}>
+                    <h1 className="font-bold">{new Intl.DateTimeFormat("en-us", {
+                      year: "numeric",
+                      month: "short",
+                      day: "2-digit"
+                    }).format(note.timeStamp.toDate())}</h1>
+                    <h1 className='font-bold text-2xl border-2 border-x-0 border-t-0 border-black'>{note.title}</h1>
+                    <p className='mt-3 max-h-[180px] whitespace-pre-line break-words overflow-y-auto'>{note.note}</p>
+                    <div className='absolute bottom-4 right-4 flex gap-3'>
+                      <BsPencilSquare 
+                        className='cursor-pointer' 
+                        onClick={(e) => {
+                          handleEdit(e, note);
+                        }}/>
+                      <FaTrash 
+                        className='cursor-pointer'
+                        disabled={refreshing}
+                        onClick={(e) => {handleDelete(e, note)}}/>   
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+          </div>
+        }
       <div>
         <SpeedDial
           ariaLabel="SpeedDial basic"
@@ -132,7 +149,8 @@ const Notes = () => {
         aria-describedby="parent-modal-description"
         style={{outline:"none"}}
       >
-        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white h-[600px] w-[500px] p-6 rounded-xl outline-none'>
+        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white 
+                        h-[600px] w-[500px] p-6 rounded-xl outline-none'>
           <h1 className='font-bold text-3xl flex items-center gap-2'>New Note<BiEdit/></h1>
           <form className='flex flex-col h-[90%] justify-between mt-5'>
             <div>
