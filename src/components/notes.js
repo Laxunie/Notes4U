@@ -6,11 +6,12 @@ import AddIcon from '@mui/icons-material/Add';
 import {FaSignOutAlt, FaTrash} from 'react-icons/fa'
 import Modal from '@mui/material/Modal';
 import {BiEdit} from 'react-icons/bi'
-import { addNote, getNotes, updateNotes, deleteNotes } from '../firebase';
+import { addNote, getNotes, updateNotes, deleteNotes, addToFavourite } from '../firebase';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import {BsPencilSquare} from 'react-icons/bs'
 import LoadingSpin from "react-loading-spin";
+import {AiFillHeart} from 'react-icons/ai'
 
 const Notes = () => {
   
@@ -18,15 +19,14 @@ const Notes = () => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
-  const [characterCount, setCharacterCount] = useState(0);
   const [dbNotes, setDBNotes] = useState({})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false);
   const [update, setUpdate] = useState(false);
   const [currentNote, setCurrentNote] = useState("")
+  const [heart, setHeart] = useState(0);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate()
-
-  var maxLength = 200;
 
   const handleOpen = () => {
     setUpdate(false)
@@ -38,7 +38,6 @@ const Notes = () => {
   };
 
   const handleNote = (e) => {
-    setCharacterCount(e.target.value.length)
     setNote(e.target.value)
   }
 
@@ -52,7 +51,6 @@ const Notes = () => {
     document.getElementById("noteTextArea").value = "";
     setTitle("")
     setNote("")
-    setCharacterCount(0)
   }
 
   const handleCreate = (e) => {
@@ -67,7 +65,6 @@ const Notes = () => {
     setUpdate(true)
     setNote(note.note)
     setTitle(note.title)
-    setCharacterCount(note.note.length)
     setOpen(true)
   }
 
@@ -83,12 +80,24 @@ const Notes = () => {
     deleteNotes(user.uid, note.ref).then(() => {navigate(0)})
   }
 
+  const handleHeart = (e, note) => {
+    e.preventDefault()
+    setHeart(heart + 1)
+    addToFavourite(user.uid, note.ref, !note.hearted)
+  }
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value)
+  }
+
   useEffect(() => {
-    getNotes(user.uid).then((results) => {
+    if(Object.keys(user).length === 0) return;
+    getNotes(user.uid, search).then((results) => {
       setDBNotes(results);
       setLoading(false)
-    }).catch(() => {return})
-  },[user])
+    }).catch((err) => {console.log(err)})
+  },[user, heart, search])
+
   return (
     <div className=''>
       <div className='flex justify-between items-center py-5 px-10'>
@@ -103,34 +112,53 @@ const Notes = () => {
         </button>
       </div>
       
-        {loading ? <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'><LoadingSpin primaryColor="blue"/></div> : 
-          <div className='inline-grid grid-cols-4 w-full gap-[40px] p-6'>
-            {dbNotes.map(note =>
-              <section key={note.id} className='delete flex flex-wrap justify-center '>
-                <Card style={{position:"relative",backgroundColor: "#fcfcfc"}} sx={{ width: 300, height:250 }}>
-                  <CardContent style={{minHeight:"100px"}}>
-                    <h1 className="font-bold">{new Intl.DateTimeFormat("en-us", {
-                      year: "numeric",
-                      month: "short",
-                      day: "2-digit"
-                    }).format(note.timeStamp.toDate())}</h1>
-                    <h1 className='font-bold text-2xl border-2 border-x-0 border-t-0 border-black'>{note.title}</h1>
-                    <p className='mt-3 max-h-[180px] whitespace-pre-line break-words overflow-y-auto'>{note.note}</p>
-                    <div className='absolute bottom-4 right-4 flex gap-3'>
-                      <BsPencilSquare 
-                        className='cursor-pointer' 
-                        onClick={(e) => {
-                          handleEdit(e, note);
-                        }}/>
-                      <FaTrash 
-                        className='cursor-pointer'
-                        disabled={refreshing}
-                        onClick={(e) => {handleDelete(e, note)}}/>   
-                    </div>
-                  </CardContent>
-                </Card>
-              </section>
-            )}
+        {loading ? <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'><LoadingSpin primaryColor="#93C5FD"/></div> : 
+          <div className='flex flex-col'>
+            <input
+              type="text"
+              placeholder="&#xF002; Search"
+              style={{"fontFamily":"Arial, FontAwesome"}}
+              className="w-[90%] mx-auto px-2 outline-none border-b-2 text-xl"
+              onChange={(e) => {handleSearch(e)}}
+            />
+            <div className='lg:grid-cols-4 md:grid-cols-3 h-full inline-grid grid-cols-1 w-full gap-[40px] p-6'>
+              {dbNotes.length !== 0 ? dbNotes.map(note =>
+                <section key={note.id} className='delete flex flex-wrap justify-center'>
+                  <Card style={{position:"relative",backgroundColor: "#fcfcfc"}} sx={{ width: 300, height:250 }}>
+                    <CardContent style={{minHeight:"100px"}}>
+                      <h1 className="font-bold">{new Intl.DateTimeFormat("en-us", {
+                        year: "numeric",
+                        month: "short",
+                        day: "2-digit"
+                      }).format(note.timeStamp.toDate())}</h1>
+                      <h1 className='font-bold text-2xl border-2 border-x-0 border-t-0 border-black'>{note.title}</h1>
+                      <p className='mt-3 max-h-[160px] whitespace-pre-line break-words overflow-y-auto'>{note.note}</p>
+                      <div className='absolute top-5 right-4 flex gap-3'>
+                        <AiFillHeart
+                          value={note.hearted}
+                          className='cursor-pointer duration-200 hover:scale-110'
+                          color={note.hearted ? "red" : "gray"}
+                          onClick={(e) => {handleHeart(e, note)}}/>
+                        <BsPencilSquare 
+                          className='cursor-pointer' 
+                          onClick={(e) => {
+                            handleEdit(e, note);
+                          }}/>
+                        <FaTrash 
+                          className='cursor-pointer'
+                          disabled={refreshing}
+                          onClick={(e) => {handleDelete(e, note)}}/>   
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+              )
+              :
+                <h1 className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-center text-blue-300'>
+                  No Notes Found!<br></br>
+                  Press the Icon at the bottom left corner to start!
+                </h1>}
+            </div>
           </div>
         }
       <div>
@@ -149,8 +177,8 @@ const Notes = () => {
         aria-describedby="parent-modal-description"
         style={{outline:"none"}}
       >
-        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white 
-                        h-[600px] w-[500px] p-6 rounded-xl outline-none'>
+        <div className='md:h-[900px] md:w-[1500px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white 
+                        h-[550px] w-[300px] p-6 rounded-xl outline-none'>
           <h1 className='font-bold text-3xl flex items-center gap-2'>New Note<BiEdit/></h1>
           <form className='flex flex-col h-[90%] justify-between mt-5'>
             <div>
@@ -167,12 +195,10 @@ const Notes = () => {
                 <label className='text-xl'>Note</label>
                 <textarea 
                   id="noteTextArea"
-                  className='border p-3 resize-none h-[200px]' 
+                  className='md:h-[600px] border p-3 resize-none h-[275px]' 
                   onChange={(e) => handleNote(e)}
-                  maxLength={maxLength}
                   value={note}
                   rows={3}/>
-                <p className='self-end'>{characterCount}/{maxLength}</p>
               </div>
             </div>
             <div className='flex justify-between'>

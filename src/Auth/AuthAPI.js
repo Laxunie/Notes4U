@@ -29,8 +29,8 @@ export const AuthContextProvider = ({ children }) => {
         window.localStorage.setItem('emailForSignIn', email);
       })
     }
-    catch{
-
+    catch(err){
+      console.log(err)
     }
   }
 
@@ -43,9 +43,9 @@ export const AuthContextProvider = ({ children }) => {
             email = window.prompt('Please provide your email for confirmation');
         }
         signInWithEmailLink(auth, email, window.location.href)
-          .then((result) => {
+          .then(() => {
             window.localStorage.removeItem('emailForSignIn');
-            <Navigate to="/notes"/>
+            <Navigate to="/Notes4U/notes"/>
           })
           .catch((error) => {
             console.log(error)
@@ -62,12 +62,9 @@ export const AuthContextProvider = ({ children }) => {
   }
 
   useEffect(() => {
-    const AuthState = onAuthStateChanged(auth, (currentUser) => {
+    onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
-    return () => {
-      AuthState();
-    };
   }, []);
 
   return (

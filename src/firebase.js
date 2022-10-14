@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { addDoc, getDocs, getFirestore, collection, updateDoc, doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { addDoc, getDocs, getFirestore, collection, updateDoc, doc, setDoc, serverTimestamp, deleteDoc, query, orderBy, where } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_APIKEY,
@@ -13,7 +13,7 @@ const firebaseConfig = {
 };
 
 initializeApp(firebaseConfig);
-console.log(process.env.REACT_APP_FIREBASE_MEASUREMENTID)
+
 const addNote = async (title, note, uid) => {
   const querySnapshot = await getDocs(collection(db,  "notes/" + uid + "/note"));
   var setId = querySnapshot.size + 1;
@@ -29,17 +29,26 @@ const addNote = async (title, note, uid) => {
     note: note,
     id: setId,
     ref: addRef.id,
+    hearted: false,
     timeStamp: serverTimestamp(),
     updatedTimeStamp: serverTimestamp()
   })
 };
 
-const getNotes = async (uid) => {
+const getNotes = async (uid, search) => {
   const data = [];
-  const querySnapshot = await getDocs(collection(db, "notes/" + uid + "/note"));
-  querySnapshot.forEach((doc) => {
-    data.push(doc.data())
-  });
+  const notesRef = collection(db, "notes/" + uid + "/note");
+  var q = query(notesRef, where("title", ">=", search), where("title", "<=", search + '\uf8ff'), orderBy("title", 'desc'),  orderBy("hearted", 'desc'))
+  if(search === ""){
+    q = query(notesRef, orderBy("hearted", 'desc'), orderBy("timeStamp", "desc"))
+  }
+  
+  await getDocs(q).then((results) => {
+    results.forEach((doc) => {
+      data.push(doc.data())
+    });
+  })
+  
   return data
 }
 
@@ -55,6 +64,13 @@ const deleteNotes = async (uid, refId) => {
   await deleteDoc(doc(db, "notes/" + uid + "/note", refId))
 }
 
+const addToFavourite = async (uid, refId, status) => {
+  const noteRef = doc(db, "notes/" + uid + "/note", refId);
+  await updateDoc(noteRef, {
+    hearted: status
+  });
+}
+
 export const auth = getAuth();
 export const db = getFirestore();
-export { addNote, getNotes, updateNotes, deleteNotes };
+export { addNote, getNotes, updateNotes, deleteNotes, addToFavourite };

@@ -6,7 +6,7 @@ import React from 'react'
 function App() {
   return (
     <div>
-      <BrowserRouter>
+      <BrowserRouter basename="/">
         <AuthContextProvider>
           <Routes>
             <Route path="/" element={<Home/>} />
