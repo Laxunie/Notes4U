@@ -123,7 +123,7 @@ const Notes = () => {
             />
             <div className='lg:grid-cols-4 md:grid-cols-3 h-full inline-grid grid-cols-1 w-full gap-[40px] p-6'>
               {dbNotes.length !== 0 ? dbNotes.map(note =>
-                <section key={note.id} className='delete flex flex-wrap justify-center'>
+                <section key={note.ref} className='delete flex flex-wrap justify-center'>
                   <Card style={{position:"relative",backgroundColor: "#fcfcfc"}} sx={{ width: 300, height:250 }}>
                     <CardContent style={{minHeight:"100px"}}>
                       <h1 className="font-bold">{new Intl.DateTimeFormat("en-us", {
@@ -177,11 +177,11 @@ const Notes = () => {
         aria-describedby="parent-modal-description"
         style={{outline:"none"}}
       >
-        <div className='md:h-[900px] md:w-[1500px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white 
-                        h-[550px] w-[300px] p-6 rounded-xl outline-none'>
-          <h1 className='font-bold text-3xl flex items-center gap-2'>New Note<BiEdit/></h1>
-          <form className='flex flex-col h-[90%] justify-between mt-5'>
-            <div>
+        <div className='flex flex-col md:h-[90%] md:w-[90%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white 
+                        h-[80%] w-[80%] p-6 rounded-xl outline-none'>
+          <h1 className='font-bold text-3xl flex items-center gap-2'>{title ? "Edit Note" : "New Note"}<BiEdit/></h1>
+          <form className='flex flex-col h-full mt-5 gap-4'>
+            <div className='flex flex-col h-full'>
               <div className='flex flex-col'>
                 <label className='text-xl'>Title</label>
                 <input 
@@ -191,17 +191,17 @@ const Notes = () => {
                   value={title}
                   onChange={(e) => handleTitle(e)}/>
               </div>
-              <div className='flex flex-col mt-6'>
+              <div className='flex flex-col mt-6 h-full'>
                 <label className='text-xl'>Note</label>
                 <textarea 
                   id="noteTextArea"
-                  className='md:h-[600px] border p-3 resize-none h-[275px]' 
+                  className='border p-3 resize-none h-full outline-none' 
                   onChange={(e) => handleNote(e)}
                   value={note}
                   rows={3}/>
               </div>
             </div>
-            <div className='flex justify-between'>
+            <div className='flex justify-between items-center'>
               <button 
                 className='border px-4 py-2 rounded bg-blue-300 text-white font-bold hover:bg-blue-500'
                 onClick={(e) => handleClear(e)}>Clear</button>

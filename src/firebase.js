@@ -15,19 +15,15 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 
 const addNote = async (title, note, uid) => {
-  const querySnapshot = await getDocs(collection(db,  "notes/" + uid + "/note"));
-  var setId = querySnapshot.size + 1;
+  await getDocs(collection(db,  "notes/" + uid + "/note"));
 
-  const addRef = await addDoc(collection(db, "notes/" + uid + "/note"), {
-    
-  });
+  const addRef = await addDoc(collection(db, "notes/" + uid + "/note"),{});
 
   //Inorder to update my documents easily, I created a reference then 'updated' the reference so I can add a key/value pair of the documents reference id
   //for me to grab in the future and update/delete the specified document
   await setDoc(doc(db, "notes/" + uid + "/note/", addRef.id),{
     title: title,
     note: note,
-    id: setId,
     ref: addRef.id,
     hearted: false,
     timeStamp: serverTimestamp(),
@@ -65,8 +61,7 @@ const deleteNotes = async (uid, refId) => {
 }
 
 const addToFavourite = async (uid, refId, status) => {
-  const noteRef = doc(db, "notes/" + uid + "/note", refId);
-  await updateDoc(noteRef, {
+  await updateDoc(doc(db, "notes/" + uid + "/note", refId), {
     hearted: status
   });
 }
