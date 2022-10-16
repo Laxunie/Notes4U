@@ -12,3 +12,8 @@ Creating this website I was able to familiarize myself with:
 * UI Framework (MaterialUI)
 * JSX, CSS(TailWind)
 * Firebase (Authentication, Firestore)
+
+Other libraries used:
+* React Router
+* React Icons
+* React Loading Spin
